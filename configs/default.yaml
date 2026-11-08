@@ -1,0 +1,55 @@
+# Neural Style Transfer - Default Configuration
+# Target Hardware: NVIDIA GeForce RTX 3050 (4GB - 6GB VRAM) / CPU Fallback
+
+hardware:
+  device: "cuda"            # Options: "cuda", "cpu", or "auto"
+  cuda_device_id: 0
+  allow_cpu_fallback: true
+  empty_cache_frequency: 50 # Frequency (in iterations) to invoke torch.cuda.empty_cache()
+
+image:
+  default_size: 256         # Conservative default for 4GB VRAM safety (can scale to 512 on 6GB)
+  max_size: 512
+  preserve_aspect_ratio: true
+  initial_image: "content"  # Options: "content", "random", "style"
+
+model:
+  architecture: "vgg19"
+  weights: "DEFAULT"        # Uses torchvision.models.VGG19_Weights.DEFAULT (ImageNet pretrained)
+  requires_grad: false      # Freeze feature extractor weights
+  layers:
+    content:
+      - "relu_4_2"          # VGG-19 relu4_2 layer
+    style:
+      - "relu_1_1"
+      - "relu_2_1"
+      - "relu_3_1"
+      - "relu_4_1"
+      - "relu_5_1"
+    style_weights:
+      relu_1_1: 1.0
+      relu_2_1: 0.8
+      relu_3_1: 0.5
+      relu_4_1: 0.3
+      relu_5_1: 0.1
+
+loss:
+  content_weight: 1.0       # Weight alpha for content loss
+  style_weight: 50000.0     # Weight beta for style loss (resolution-invariant normalized Gram MSE)
+  tv_weight: 0.0001         # Total variation loss weight for spatial smoothness (gamma)
+  loss_normalization: "mean" # Resolution-invariant normalized Gram MSE
+
+optimization:
+  optimizer: "lbfgs"        # Options: "lbfgs", "adam"
+  max_iter: 300             # Standard iterations for L-BFGS
+  lr: 1.0                   # Learning rate for L-BFGS (typically 1.0); use 0.02 - 0.05 for Adam
+  tolerance_grad: 1.0e-7
+  tolerance_change: 1.0e-9
+  history_size: 50
+
+logging:
+  log_frequency: 25         # Log loss stats every N steps (emitted via SSE to client HUD)
+  save_intermediate: false  # Save intermediate snapshots to outputs/
+  snapshot_frequency: 100
+  telemetry_hud_auto_hide: true # UI auto-dismisses telemetry HUD upon completion to prevent image obstruction
+
