@@ -136,3 +136,46 @@ class StyleLoss(nn.Module):
             loss = torch.mean(diff_norm * diff_norm)
 
         return self.weight * loss
+
+
+class TotalVariationLoss(nn.Module):
+    """Isotropic Total Variation regularization loss to encourage spatial smoothness.
+
+    Parameters
+    ----------
+    weight : float, optional
+        Loss weighting coefficient (gamma), by default 1.0e-4.
+    """
+
+    def __init__(self, weight: float = 1.0e-4) -> None:
+        super().__init__()
+        self.weight = float(weight)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Calculate spatial total variation loss.
+
+        Parameters
+        ----------
+        x : torch.Tensor
+            Image tensor of shape (B, 3, H, W) in [0.0, 1.0].
+
+        Returns
+        -------
+        torch.Tensor
+            Scalar regularizer loss.
+        """
+        if self.weight <= 0.0:
+            return torch.tensor(0.0, device=x.device, dtype=x.dtype)
+
+        # Finite forward differences in vertical and horizontal directions
+        diff_h = (x[:, :, 1:, :] - x[:, :, :-1, :]).pow(2)
+        diff_w = (x[:, :, :, 1:] - x[:, :, :, :-1]).pow(2)
+
+        # Align dimensions to compute isotropic variation
+        aligned_h = diff_h[:, :, :, :-1]
+        aligned_w = diff_w[:, :, :-1, :]
+
+        # Add 1e-8 for numerical stability (prevent derivative of sqrt(0))
+        # Subtract sqrt(1e-8) = 1e-4 so flat images have zero base loss
+        tv = torch.sum(torch.sqrt(aligned_h + aligned_w + 1e-8) - 1e-4)
+        return self.weight * tv
