@@ -1,0 +1,93 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables & Secrets
+.env
+*.env.local
+*.env.*.local
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+.agents/
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# PyTorch checkpoints and model weights cache
+*.pt
+*.pth
+*.bin
+*.onnx
+checkpoints/
+models_cache/
+torch_cache/
+
+# Streamlit local storage & runtime cache
+.streamlit/secrets.toml
+
+# Testing & Coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+
+# Generated outputs & scratch files
+outputs/
+generated/
+runs/
+experiments/
+scratch/
+tmp/
+*.log
+
+# Operating System specific files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentation (local only, not pushed to GitHub)
+docs/
+skills-lock.json
