@@ -1,0 +1,27 @@
+# LICENSE SELECTION PLACEHOLDER
+
+No explicit open-source license has been selected for the **Neural Style Transfer — AI Art Generator** repository yet.
+
+To maintain licensing compliance and allow the community to use or contribute to this code, the project owner or maintainers should select one of the standard open-source licenses listed below and replace this document:
+
+---
+
+### Option 1: MIT License (Recommended for open educational and research tools)
+- **Type**: Permissive
+- **Summary**: Grants anyone permission to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject only to including the original copyright notice and disclaimer.
+- **Best for**: Maximum adoption, commercial compatibility, and developer convenience.
+
+### Option 2: Apache License 2.0
+- **Type**: Permissive with explicit patent protection
+- **Summary**: Similar permissions to MIT, but explicitly provides a grant of patent rights from contributors to users and protects against trademark usage.
+- **Best for**: Institutional, enterprise, and patent-conscious open-source projects.
+
+### Option 3: GNU General Public License v3.0 (GPLv3)
+- **Type**: Strong Copyleft
+- **Summary**: Requires that any derivative works or distributed applications containing this code also be released under GPLv3 with open source code.
+- **Best for**: Ensuring all derivative improvements remain strictly open source.
+
+---
+
+### Action Required
+Please select your preferred license (e.g., MIT, Apache 2.0, or GPLv3) or notify your AI assistant to update this file with your formal copyright holder name and year.
