@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NST Atelier — Retro-precision Neural Style Transfer workstation powered by PyTorch, VGG-19, and real-time iterative SSE streaming.">
+  <meta name="theme-color" content="#0D0E12">
+  <title>NST Atelier — Retro Precision Neural Art Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Ambient Backdrop Lighting -->
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
+
+  <!-- Navigation Bar -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <span class="logo-mark">◇</span>
+        <span class="logo-text">NST ATELIER</span>
+        <span class="version-tag">PRO v0.2.0</span>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="segmented-control">
+        <button id="tab-presets-btn" class="segment-btn active" onclick="switchInputMode('presets')">Exhibition Presets</button>
+        <button id="tab-custom-btn" class="segment-btn" onclick="switchInputMode('custom')">Custom Studio</button>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="hardware-pill" class="status-badge">
+        <span class="status-indicator"></span>
+        <span id="hardware-text">INITIALIZING CUDA...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Studio Workspace -->
+  <main class="studio-layout">
+    <!-- Left Panel: Input Composition -->
+    <aside class="panel-left">
+      <!-- Section: Presets View -->
+      <div id="presets-container" class="input-section">
+        <div class="section-label">CURATED EXHIBITION PAIRINGS</div>
+        <div id="preset-card-list" class="preset-cards">
+          <!-- Dynamic preset cards injected by app.js -->
+        </div>
+      </div>
+
+      <!-- Section: Custom Upload View -->
+      <div id="custom-container" class="input-section hidden">
+        <div class="section-label">CUSTOM INPUT COMPOSITION</div>
+        
+        <!-- Content Photo Dropzone -->
+        <div class="dropzone-card" id="content-dropzone">
+          <div class="dropzone-header">
+            <span>1. Content Photograph</span>
+            <span class="badge-dim" id="content-dims">Empty</span>
+          </div>
+          <div class="dropzone-body" onclick="document.getElementById('content-input').click()">
+            <input type="file" id="content-input" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <div id="content-placeholder" class="dropzone-empty">
+              <span class="icon-upload">↑</span>
+              <p>Drop photo here or <span>browse</span></p>
+              <small>Portraits, landscapes, architecture</small>
+            </div>
+            <img id="content-preview" class="preview-thumb hidden" alt="Content Preview">
+          </div>
+        </div>
+
+        <!-- Style Painting Dropzone -->
+        <div class="dropzone-card" id="style-dropzone">
+          <div class="dropzone-header">
+            <span>2. Style Reference</span>
+            <span class="badge-dim" id="style-dims">Empty</span>
+          </div>
+          <div class="dropzone-body" onclick="document.getElementById('style-input').click()">
+            <input type="file" id="style-input" accept="image/jpeg,image/png,image/webp" style="display:none">
+            <div id="style-placeholder" class="dropzone-empty">
+              <span class="icon-upload">🎨</span>
+              <p>Drop painting here or <span>browse</span></p>
+              <small>Oil painting, sketch, or texture</small>
+            </div>
+            <img id="style-preview" class="preview-thumb hidden" alt="Style Preview">
+          </div>
+        </div>
+      </div>
+
+      <!-- Composition Preview Strip -->
+      <div class="composition-summary">
+        <div class="summary-thumb-box">
+          <img id="summary-content-img" src="/assets/content/dancing.jpg" alt="Active Content">
+          <span class="thumb-tag">Content</span>
+        </div>
+        <div class="flow-arrow">✕</div>
+        <div class="summary-thumb-box">
+          <img id="summary-style-img" src="/assets/style/picasso.jpg" alt="Active Style">
+          <span class="thumb-tag">Style</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Stage: The Live Creative Easel & Interactive Comparison -->
+    <section class="canvas-stage">
+      <div class="canvas-header-bar">
+        <div class="canvas-title-group">
+          <h2 id="artwork-title">Cubist Ballerina</h2>
+          <p id="artwork-subtitle"><span>Pablo Picasso · Cubism (1909)</span> <span id="canvas-state-chip" class="canvas-state-chip">Ready to Synthesize</span></p>
+        </div>
+        <div class="canvas-actions">
+          <button id="view-mode-toggle" class="btn-ghost btn-disabled" onclick="toggleComparisonMode()" disabled aria-disabled="true" title="Run synthesis first to compare before & after">
+            <span id="view-mode-text">⇄ Split Slider</span>
+            <kbd class="retro-kbd">TAB</kbd>
+          </button>
+          <button id="hud-toggle-btn" class="btn-ghost" onclick="toggleTelemetryHUD()" aria-pressed="false" title="Toggle Telemetry HUD Overlay (Hotkey: I)">
+            <span id="hud-toggle-text">ℹ HUD</span>
+            <kbd class="retro-kbd">I</kbd>
+          </button>
+          <a id="download-btn" class="btn-ghost hidden" href="" download="masterpiece.png">
+            ↓ Export PNG
+          </a>
+        </div>
+      </div>
+
+      <!-- Interactive Canvas Surface -->
+      <div class="canvas-surface-wrapper">
+        <span class="reticle-mark tl">⌜</span>
+        <span class="reticle-mark tr">⌝</span>
+        <span class="reticle-mark bl">⌞</span>
+        <span class="reticle-mark br">⌟</span>
+
+        <!-- Live Telemetry Overlay (Placed in outer darkroom chamber, outside image pixels) -->
+        <div id="live-telemetry-badge" class="telemetry-hud hidden" role="status" aria-live="polite">
+          <div class="hud-item">
+            <span class="hud-label">Step</span>
+            <span id="hud-step" class="hud-val">0 / 100</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">Loss</span>
+            <span id="hud-loss" class="hud-val">0.000</span>
+          </div>
+          <div class="hud-item">
+            <span class="hud-label">Speed</span>
+            <span id="hud-speed" class="hud-val">0.0 it/s</span>
+          </div>
+        </div>
+
+        <!-- Unified Easel Art Frame (Unobstructed Artwork & Split Viewport) -->
+        <div id="live-canvas-view" class="easel-frame">
+          <!-- Primary Canvas Image (Displays Content Image before synthesis, Stylized Artwork after) -->
+          <img id="easel-image" src="/assets/content/dancing.jpg" alt="Content Photograph">
+
+          <!-- Interactive Split Comparison (Active in Split Mode, directly bound to this frame) -->
+          <div id="split-comparison-container" class="split-container hidden">
+            <div class="split-image-before">
+              <img id="split-before-img" class="split-img-layer" src="/assets/content/dancing.jpg" alt="Original Photo">
+              <span class="split-label left">Original</span>
+            </div>
+            <div class="split-image-after" id="split-after-wrapper">
+              <img id="split-after-img" class="split-img-layer" src="" alt="Neural Masterpiece">
+              <span class="split-label right">Stylized</span>
+            </div>
+            <div class="split-handle" id="split-divider">
+              <div class="handle-line"></div>
+              <div class="handle-grip"><span>⇄</span></div>
+              <div class="handle-line"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analog LED VU Meter Telemetry Rack -->
+      <div class="analog-vu-meter-rack">
+        <div class="vu-channel">
+          <span class="vu-channel-name">CH-C // CONTENT</span>
+          <div class="vu-led-strip" id="vu-content-strip">
+            <span class="vu-led active-green"></span><span class="vu-led active-green"></span><span class="vu-led"></span>
+            <span class="vu-led"></span><span class="vu-led"></span><span class="vu-led"></span>
+          </div>
+          <span class="vu-readout" id="vu-content-val">1.02</span>
+        </div>
+        <div class="vu-channel">
+          <span class="vu-channel-name">CH-S // STYLE</span>
+          <div class="vu-led-strip" id="vu-style-strip">
+            <span class="vu-led active-green"></span><span class="vu-led active-green"></span><span class="vu-led active-amber"></span>
+            <span class="vu-led"></span><span class="vu-led"></span><span class="vu-led"></span>
+          </div>
+          <span class="vu-readout" id="vu-style-val">19.9</span>
+        </div>
+        <div class="vu-channel">
+          <span class="vu-channel-name">CH-TV // SMOOTH</span>
+          <div class="vu-led-strip" id="vu-tv-strip">
+            <span class="vu-led active-green"></span><span class="vu-led"></span><span class="vu-led"></span>
+            <span class="vu-led"></span><span class="vu-led"></span><span class="vu-led"></span>
+          </div>
+          <span class="vu-readout" id="vu-tv-val">2.53</span>
+        </div>
+      </div>
+
+      <!-- Live Loss Chart & Convergence Metrics -->
+      <div class="stage-footer-metrics">
+        <div class="metric-card">
+          <span class="m-label">Execution Duration</span>
+          <span id="metric-duration" class="m-value">4.21s</span>
+        </div>
+        <div class="metric-card">
+          <span class="m-label">Canvas Dimensions</span>
+          <span id="metric-res" class="m-value">256 × 256 px</span>
+        </div>
+        <div class="metric-card">
+          <span class="m-label">Convergence Loss</span>
+          <span id="metric-loss" class="m-value">23.62</span>
+        </div>
+        <div class="metric-card">
+          <span class="m-label">Hardware Engine</span>
+          <span id="metric-device" class="m-value">NVIDIA RTX 3050</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Panel: Synthesis Controls & Parameters -->
+    <aside class="panel-right">
+      <div class="section-label">SYNTHESIS ENGINE PARAMETERS</div>
+
+      <!-- Stylization Intensity Slider -->
+      <div class="control-group">
+        <div class="control-header">
+          <label for="intensity-slider">Artistic Intensity (β)</label>
+          <span id="intensity-val-label" class="param-badge">1×10⁵ (Balanced)</span>
+        </div>
+        <input type="range" id="intensity-slider" min="1" max="4" value="2" step="1" class="studio-slider">
+        <div class="slider-ticks">
+          <span>Subtle</span>
+          <span>Balanced</span>
+          <span>Vivid</span>
+          <span>Abstract</span>
+        </div>
+      </div>
+
+      <!-- Working Canvas Resolution -->
+      <div class="control-group">
+        <div class="control-header">
+          <label>Working Resolution</label>
+          <span id="res-val-label" class="param-badge">256px</span>
+        </div>
+        <div class="pill-selector" id="res-selector">
+          <button class="pill-choice" data-res="192">192px</button>
+          <button class="pill-choice active" data-res="256">256px <small>Fast</small></button>
+          <button class="pill-choice" data-res="384">384px</button>
+          <button class="pill-choice" data-res="512">512px <small>High</small></button>
+        </div>
+      </div>
+
+      <!-- Iteration Count -->
+      <div class="control-group">
+        <div class="control-header">
+          <label for="steps-input">Iterations (Steps)</label>
+          <span id="steps-val-label" class="param-badge">100 L-BFGS</span>
+        </div>
+        <input type="range" id="steps-input" min="30" max="200" value="100" step="10" class="studio-slider">
+      </div>
+
+      <!-- Advanced Drawer Toggle -->
+      <details class="advanced-drawer">
+        <summary>Advanced Architectural Weights</summary>
+        <div class="drawer-content">
+          <div class="sub-control">
+            <div class="sub-header">
+              <span>Content Fidelity (α)</span>
+              <span id="alpha-label">1.0</span>
+            </div>
+            <input type="range" id="alpha-input" min="0.2" max="3.0" value="1.0" step="0.2" class="studio-slider">
+          </div>
+          <div class="sub-control">
+            <div class="sub-header">
+              <span>TV Smoothing (γ)</span>
+              <span id="tv-label">1e-4</span>
+            </div>
+            <select id="tv-input" class="studio-select">
+              <option value="0.0">Off (Sharp)</option>
+              <option value="1e-5">Subtle (1e-5)</option>
+              <option value="1e-4" selected>Standard (1e-4)</option>
+              <option value="5e-4">Strong Denoise (5e-4)</option>
+            </select>
+          </div>
+          <div class="sub-control">
+            <div class="sub-header">
+              <span>Optimization Method</span>
+            </div>
+            <select id="optimizer-input" class="studio-select">
+              <option value="lbfgs" selected>L-BFGS (Strong Wolfe Line Search)</option>
+              <option value="adam">Adam (First-Order Adaptive)</option>
+            </select>
+          </div>
+        </div>
+      </details>
+
+      <!-- Action Button Area -->
+      <div class="action-footer">
+        <button id="synthesize-btn" class="btn-synthesize" onclick="startSynthesis()">
+          <span class="btn-shimmer"></span>
+          <span id="btn-text">Synthesize Artwork</span>
+          <span id="btn-spinner" class="spinner hidden"></span>
+        </button>
+        <div id="progress-container" class="progress-wrap hidden">
+          <div class="progress-bar-bg">
+            <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+          <div class="progress-caption">
+            <span id="progress-pct">0%</span>
+            <span id="progress-desc">Executing gradient descent...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Non-Intrusive Darkroom Toast Notification Host -->
+  <div id="toast-container" class="toast-container" role="region" aria-live="polite" aria-label="Notifications"></div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
