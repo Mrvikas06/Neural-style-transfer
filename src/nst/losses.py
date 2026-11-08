@@ -35,3 +35,104 @@ def gram_matrix(features: torch.Tensor) -> torch.Tensor:
 
     # Compute inner product of vectorized feature map activations
     return torch.mm(features_flat, features_flat.t())
+
+
+class ContentLoss(nn.Module):
+    """Content loss measuring semantic deviation from the content target representation.
+
+    Parameters
+    ----------
+    target_feature : torch.Tensor
+        Precomputed target feature map of shape (1, C, H, W).
+    weight : float, optional
+        Loss weighting coefficient (alpha), by default 1.0.
+    normalization : str, optional
+        Loss normalization ('mean' for MSE or 'gatys' for unnormalized sum), by default 'mean'.
+    """
+
+    def __init__(
+        self,
+        target_feature: torch.Tensor,
+        weight: float = 1.0,
+        normalization: str = "mean",
+    ) -> None:
+        super().__init__()
+        # Detach target representation so its computational graph is not retained
+        self.register_buffer("target", target_feature.detach().clone())
+        self.weight = float(weight)
+        self.normalization = normalization.lower()
+
+    def forward(self, input_feature: torch.Tensor) -> torch.Tensor:
+        """Compute weighted mean squared error between generated and target features.
+
+        Parameters
+        ----------
+        input_feature : torch.Tensor
+            Generated feature map of shape (1, C, H, W).
+
+        Returns
+        -------
+        torch.Tensor
+            Scalar loss tensor.
+        """
+        diff = input_feature - self.target
+        if self.normalization == "gatys":
+            loss = 0.5 * torch.sum(diff * diff)
+        else:
+            loss = torch.mean(diff * diff)
+        return self.weight * loss
+
+
+class StyleLoss(nn.Module):
+    """Style loss measuring texture divergence via Gram matrix difference.
+
+    Parameters
+    ----------
+    target_gram : torch.Tensor
+        Precomputed target Gram matrix of shape (C, C).
+    weight : float, optional
+        Layer-specific weighting coefficient (w_l), by default 0.2.
+    normalization : str, optional
+        Normalization convention ('mean' for resolution-invariant MSE, or 'gatys'
+        for 1 / (4 * N^2 * M^2)), by default 'mean'.
+    """
+
+    def __init__(
+        self,
+        target_gram: torch.Tensor,
+        weight: float = 0.2,
+        normalization: str = "mean",
+    ) -> None:
+        super().__init__()
+        # Detach target Gram matrix
+        self.register_buffer("target_gram", target_gram.detach().clone())
+        self.weight = float(weight)
+        self.normalization = normalization.lower()
+
+    def forward(self, input_feature: torch.Tensor) -> torch.Tensor:
+        """Compute normalized style error.
+
+        Parameters
+        ----------
+        input_feature : torch.Tensor
+            Generated feature map of shape (1, C, H, W).
+
+        Returns
+        -------
+        torch.Tensor
+            Scalar loss tensor.
+        """
+        g_generated = gram_matrix(input_feature)
+        diff = g_generated - self.target_gram
+        _, c, h, w = input_feature.shape
+
+        if self.normalization == "gatys":
+            sq_diff = torch.sum(diff * diff)
+            denom = 4.0 * (c ** 2) * ((h * w) ** 2)
+            loss = sq_diff / denom
+        else:
+            # Resolution-invariant normalized Gram MSE
+            diff_norm = diff / float(h * w)
+            loss = torch.mean(diff_norm * diff_norm)
+
+        return self.weight * loss
